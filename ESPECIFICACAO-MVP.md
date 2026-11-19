@@ -8,26 +8,26 @@ Documento normativo de requisitos funcionais e contratos comportamentais (**BDD 
 
 - **Ator:** Aluno, Docente ou Técnico-Administrativo do IFPI.
 - **Entradas:**
-  - `titulo` (`VARCHAR(120)`, obrigatório): Resumo curto do problema (ex.: `"Ar-condicionado pingando"`).
-  - `descricao` (`TEXT`, obrigatório): Descrição detalhada do defeito observado na sala ou equipamento.
-  - `sala_bloco` (`VARCHAR(30)`, obrigatório): Identificação do local no campus (ex.: `"CTC-B3-18"`, `"CTC-B2-07"`).
-  - `categoria` (`VARCHAR(30)`, obrigatório): Categoria técnica pertencente ao conjunto `('climatizacao', 'eletrica', 'rede_ti', 'mobiliario', 'projetor_av', 'estrutura')`.
-  - `solicitante_nome` (`VARCHAR(80)`, opcional): Nome ou identificação do relator.
-- **Regras de Negócio:**
-  1. Todos os campos obrigatórios devem ser validados no cliente (*Fail Fast*) antes do envio e garantidos no banco via `NOT NULL`.
+  - `titulo` (`VARCHAR(120)`, obrigatório): Resumo objetivo do problema com comprimento entre **5 e 120 caracteres úteis** após `trim()` (ex.: `"Ar-condicionado pingando"`).
+  - `descricao` (`TEXT`, obrigatório): Relato técnico mensurável do defeito contendo obrigatoriamente entre **10 e 500 caracteres úteis** após `trim()`.
+  - `sala_bloco` (`VARCHAR(30)`, obrigatório): Identificação padronizada do local no campus com **3 a 30 caracteres úteis** após `trim()` (ex.: `"CTC-B3-18"`, `"CTC-B2-07"`).
+  - `categoria` (`VARCHAR(30)`, obrigatório): Categoria técnica pertencente estritamente ao conjunto `('climatizacao', 'eletrica', 'rede_ti', 'mobiliario', 'projetor_av', 'estrutura')`.
+  - `solicitante_nome` (`VARCHAR(80)`, opcional): Nome ou identificação institucional do relator (máximo de 80 caracteres).
+- **Regras de Negócio (Refinadas após Auditoria Técnica):**
+  1. Todos os campos obrigatórios devem ser validados no cliente (*Fail Fast*) antes do envio e garantidos no banco via `NOT NULL` e constraints `CHECK` de comprimento mínimo (`char_length(trim(titulo)) >= 5`, `char_length(trim(descricao)) >= 10` e `char_length(trim(sala_bloco)) >= 3`).
   2. A coluna `categoria` deve ser validada no PostgreSQL por constraint `CHECK` aceitando exclusivamente os 6 valores oficiais do domínio.
   3. Todo registro criado recebe automaticamente `id` do tipo `UUID` (`gen_random_uuid()`) e `created_at` do tipo `TIMESTAMPTZ` (`now()`).
 - **Saída Observável:**
-  - **Na interface/terminal:** Retorno estruturado `{ sucesso: true, dados: { id, created_at, ... } }` confirmando a gravação.
+  - **Na interface/terminal:** Retorno estruturado `{ sucesso: true, dados: { id, created_at, ... } }` confirmando a gravação em até 3 segundos.
   - **No banco de dados (Supabase):** Nova linha persistida na tabela `public.chamados_manutencao`.
 - **Cenário de Sucesso (BDD):**
-  - **Dado que** o usuário informa o título `"Projetor sem sinal HDMI"`, descrição detalhada do defeito, local `"CTC-B3-18"` e categoria `"projetor_av"`,
+  - **Dado que** o usuário preenche `titulo = "Projetor sem sinal HDMI"` (23 caracteres), `descricao = "Projetor da bancada central liga a lâmpada mas não reconhece cabo HDMI"` (70 caracteres), `sala_bloco = "CTC-B3-18"` e `categoria = "projetor_av"`,
   - **Quando** confirma o envio do chamado de manutenção,
-  - **Então** o sistema persiste o registro no Supabase com `UUID` gerado, `status` inicial `"aberto"` e retorna confirmação de sucesso.
+  - **Então** o sistema valida os comprimentos mínimos, persiste o registro no Supabase com `UUID` gerado e `status = "aberto"`, e retorna `{ sucesso: true }` com os dados gravados.
 - **Cenário de Falha (BDD):**
-  - **Dado que** o usuário tenta enviar o formulário com o campo `sala_bloco` vazio ou com uma `categoria` inexistente (`"outros_aleatorio"`),
+  - **Dado que** o usuário tenta enviar o chamado com `descricao = "Ruim"` (menos de 10 caracteres úteis), `sala_bloco` vazio ou `categoria = "outros_aleatorio"`,
   - **Quando** solicita o cadastro do chamado,
-  - **Então** o sistema bloqueia a operação (no cliente ou via constraint do banco) e retorna mensagem de erro explicando o motivo da rejeição.
+  - **Então** o sistema bloqueia a operação (no cliente ou via `CHECK constraint` do PostgreSQL) e retorna mensagem de erro explícita sem persistir linha inválida.
 
 ---
 
@@ -35,10 +35,13 @@ Documento normativo de requisitos funcionais e contratos comportamentais (**BDD 
 
 - **Ator:** Sistema de Triagem / Agente Classificador de IA validado pelo Banco Relacional (Oráculo).
 - **Entradas:**
-  - `criticidade` (`VARCHAR(20)`, obrigatório, padrão `'media'`): Nível de urgência atribuído ao chamado.
-- **Regras de Negócio:**
-  1. **Princípio do Oráculo:** Mesmo que um modelo de IA ou cliente externo tente classificar a urgência com termos inventados (ex.: `"super_urgente"`, `"altissima"`, `"10"`), o PostgreSQL deve impor a constraint `CHECK (criticidade IN ('baixa', 'media', 'critica'))`.
-  2. Chamados que afetam diretamente o funcionamento de laboratórios de aula prática ou segurança elétrica recebem criticidade `'critica'`.
+  - `criticidade` (`VARCHAR(20)`, obrigatório, padrão `'media'`): Nível de urgência atribuído ao chamado, pertencente estritamente a `('baixa', 'media', 'critica')`.
+- **Regras de Negócio (Refinadas após Auditoria Técnica):**
+  1. **Princípio do Oráculo:** Mesmo que um modelo de IA ou cliente externo tente classificar a urgência com termos subjetivos ou alucinados (ex.: `"super_urgente"`, `"altissima"`, `"10"`), o PostgreSQL deve impor a constraint `CHECK (criticidade IN ('baixa', 'media', 'critica'))`.
+  2. Critério determinístico de classificação:
+     - `'critica'`: falhas de `eletrica` com risco/pane total, `rede_ti` ou `climatizacao` que paralisem laboratório de aula prática;
+     - `'media'`: falha parcial de `projetor_av`, `climatizacao` ou `rede_ti` que permita continuidade parcial da atividade;
+     - `'baixa'`: ajustes pontuais de `mobiliario` ou `estrutura` sem bloqueio de uso da sala.
 - **Saída Observável:**
   - **Na interface/terminal:** Chamado salvo com a coluna `criticidade` preenchida com um dos 3 valores determinísticos.
   - **No banco de dados (Supabase):** Constraint `chamados_criticidade_check` ativa bloqueando qualquer valor fora da lista permitida.

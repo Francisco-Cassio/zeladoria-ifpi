@@ -1,7 +1,7 @@
 # Zeladoria IFPI (`zeladoria-ifpi`)
 
 > **Pitch Oficial do MVP:**  
-> *"Para alunos, professores e técnicos do IFPI Campus Teresina Central, que sofrem com a demora e a perda de relatos sobre equipamentos ou estruturas danificadas em salas e laboratórios, faremos uma plataforma web de registro e triagem de chamados de manutenção com classificação determinística de criticidade, diferente de avisos informais em corredores ou grupos de WhatsApp, medindo o sucesso inicial por 30 chamados registrados e triados no 1º mês."*
+> *"Para alunos e servidores do IFPI que sofrem com demora no reparo de salas e laboratórios, faremos um sistema web de chamados com triagem de criticidade por IA, diferente de avisos informais no WhatsApp, medindo o sucesso por 30 chamados no 1º mês."*
 
 ---
 
