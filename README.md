@@ -5,6 +5,13 @@
 
 ---
 
+## 👥 Equipe do Projeto (ADS IV — IFPI Campus Teresina Central)
+
+- **Francisco de Cássio da Silva Mourão Júnior** — [@Francisco-Cassio](https://github.com/Francisco-Cassio)
+- **Álvaro Miguel Rodrigues** — [@alvaro-miguel](https://github.com/alvaro-miguel)
+
+---
+
 ## 1. Contexto e Dor Real (Alinhamento LGPD)
 
 No cotidiano acadêmico do **IFPI Campus Teresina Central**, problemas estruturais e de equipamentos em salas de aula e laboratórios (como ar-condicionado inoperante, projetores sem sinal, computadores com falha de hardware ou tomadas danificadas) são frequentemente comunicados de maneira informal pelos corredores, em grupos de mensagens ou verbalmente.

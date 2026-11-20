@@ -1,0 +1,20 @@
+{
+  "name": "zeladoria-ifpi",
+  "version": "0.1.0",
+  "description": "Sistema web de registro e triagem de chamados de manutenção do IFPI com Supabase e RLS",
+  "type": "module",
+  "scripts": {
+    "smoke-test": "node src/services/test-insert.js"
+  },
+  "keywords": [
+    "ifpi",
+    "supabase",
+    "postgresql",
+    "rls",
+    "mvp"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.2"
+  }
+}
