@@ -4,6 +4,7 @@
   "description": "Sistema web de registro e triagem de chamados de manutenção do IFPI com Supabase e RLS",
   "type": "module",
   "scripts": {
+    "test": "node --test test/contrato.test.js",
     "smoke-test": "node src/services/test-insert.js"
   },
   "keywords": [

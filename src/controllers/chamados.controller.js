@@ -30,9 +30,15 @@ export const chamadosController = {
         });
       }
 
-      if (titulo.trim().length < 5 || descricao.trim().length < 10 || descricao.length > 500 || sala_bloco.trim().length < 3) {
+      if (titulo.trim().length < 5) {
         return res.status(400).json({
-          erro: 'Comprimento invalido: titulo (>=5), descricao (10 a 500) e sala_bloco (>=3).'
+          erro: 'O titulo do chamado deve ter pelo menos 5 caracteres uteis (RF-01).'
+        });
+      }
+
+      if (descricao.trim().length < 10 || descricao.length > 500 || sala_bloco.trim().length < 3) {
+        return res.status(400).json({
+          erro: 'Comprimento invalido: descricao (10 a 500) e sala_bloco (>=3).'
         });
       }
 
