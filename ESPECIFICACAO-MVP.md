@@ -109,6 +109,58 @@ Documento normativo de requisitos funcionais e contratos comportamentais (**BDD 
 ## Stack Tecnológica Inicial
 
 - **Linguagem / Runtime:** JavaScript (ES Modules) / Node.js
+- **Arquitetura da API RESTful (Aula 10):** 4 camadas (`repositories` -> `controllers` -> `routes` -> `server`) seguindo as restrições formais de Roy Fielding (2000)
 - **Backend-as-a-Service (BaaS):** Supabase (PostgreSQL 15+ gerenciado, PostgREST sobre HTTPS porta 443, Row Level Security)
 - **SDK Oficial:** `@supabase/supabase-js`
 - **Gerenciamento de Segredos:** Variáveis de ambiente isoladas em `.env.local` (não versionado) com template documentado em `.env.example`
+
+---
+
+## Contrato de Comunicação da API RESTful (Aula 10)
+
+### 1. Tabela de Endpoints RESTful (`/api/v1/chamados`)
+
+| Método HTTP | URI (Substantivo no Plural) | Operação / Semântica | Seguro (Safe) | Idempotente | Status Sucesso | Status de Erro Esperados |
+|---|---|---|---|---|---|---|
+| `POST` | `/api/v1/chamados` | Criar novo chamado de manutenção (retorna header `Location: /api/v1/chamados/:id`) | Não | Não | `201 Created` | `400 Bad Request`, `422 Unprocessable Entity`, `500 Internal Server Error` |
+| `GET` | `/api/v1/chamados` | Listar chamados cadastrados (suporta filtro opcional `?categoria=` ou `?status=`) | Sim | Sim | `200 OK` | `500 Internal Server Error` |
+| `GET` | `/api/v1/chamados/:id` | Consultar chamado específico por `UUID` | Sim | Sim | `200 OK` | `400 Bad Request`, `404 Not Found`, `500 Internal Server Error` |
+| `PUT` | `/api/v1/chamados/:id` | Atualizar dados/status ou criticidade de um chamado existente | Não | Sim | `200 OK` | `400 Bad Request`, `404 Not Found`, `500 Internal Server Error` |
+| `DELETE` | `/api/v1/chamados/:id` | Remover chamado por `UUID` (resposta sem corpo) | Não | Sim | `204 No Content` | `404 Not Found`, `500 Internal Server Error` |
+
+### 2. Modelos JSON de Payload
+
+#### Requisição `POST /api/v1/chamados` (`Content-Type: application/json`)
+```json
+{
+  "titulo": "Ar-condicionado sem refrigerar no laboratório",
+  "descricao": "Aparelho central liga o ventilador, mas o compressor desarma após 5 minutos de aula.",
+  "sala_bloco": "CTC-B3-18",
+  "categoria": "climatizacao",
+  "criticidade": "critica",
+  "solicitante_nome": "Discente ADS IV"
+}
+```
+
+#### Resposta de Sucesso `HTTP/1.1 201 Created`
+- **Header obrigatório:** `Location: /api/v1/chamados/408547db-7579-473f-8f2a-45fdfa30c8a8`
+```json
+{
+  "id": "408547db-7579-473f-8f2a-45fdfa30c8a8",
+  "created_at": "2026-11-20T09:33:51.903317+00:00",
+  "titulo": "Ar-condicionado sem refrigerar no laboratório",
+  "descricao": "Aparelho central liga o ventilador, mas o compressor desarma após 5 minutos de aula.",
+  "sala_bloco": "CTC-B3-18",
+  "categoria": "climatizacao",
+  "criticidade": "critica",
+  "status": "aberto",
+  "solicitante_nome": "Discente ADS IV"
+}
+```
+
+#### Resposta de Erro de Validação `HTTP/1.1 400 Bad Request`
+```json
+{
+  "erro": "Campos obrigatorios invalidos ou violacao de contrato: verifique titulo (>=5 chars), descricao (10 a 500 chars), sala_bloco, categoria e criticidade."
+}
+```
